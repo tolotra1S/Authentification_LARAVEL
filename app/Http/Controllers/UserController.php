@@ -30,15 +30,16 @@ class UserController extends Controller
         ]);
         $utilisateur = User::where("email",$utilisateurDonnee["email"])->first();
         if(!$utilisateur) return response(["message" => "Aucun utilisateur de trouver avec l'email suivante $utilisateurDonnee[email]"],401); 
-        /* if(!Hash::check($utilisateurDonnee["password"], $utilisateur -> password))
+        /* if(!Hash::check($utilisateurDonnee["password"], $utilisateur->xpassword))
         {
         return response(["message" => "Aucun utilisateur de trouver avec ce mot de passe "],401);
-          } */
-        /* $token = $utilisateur->createToken("CLE_SECRETE")->plainTextToken;
+          }  */
+         $token = $utilisateur->createToken("CLE_SECRETE")->plainTextToken;
         return response([
             "utilisateur" => $utilisateur,
-            "token" => $token,
-        ], 200); */
-        return $utilisateurs;
+            "token" => $token
+        ], 200);
+        
     }
+     
 }   
