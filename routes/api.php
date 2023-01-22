@@ -2,8 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-
+use App\Http\Controllers\UserController; 
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -14,8 +13,20 @@ use App\Http\Controllers\UserController;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-Route::post("/utilisateur/inscription", [UserController::class, "inscription"]);
-Route::post("/utilisateur/connexion", [UserController::class, "connexion"]);
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+
+Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+
+
+Route::post('/register',[UserController::class,'register']); 
+
+Route::post('/login',[UserController::class,'login']);
+
+Route::get('/logout', [UserController::class, 'logout'])->name('logout.user');
+
+
+Route::get('/login',[UserController::class,'login'])->name('login'); // To Verify from Middle Ware
+
+Route::middleware('auth:api')->get('/details',[UserController::class,'getTaskList'] );

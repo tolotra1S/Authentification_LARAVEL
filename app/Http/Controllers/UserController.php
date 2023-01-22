@@ -1,46 +1,70 @@
 <?php
 
 namespace App\Http\Controllers;
-use Illuminate\Support\Facades\Hash;
-
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\Task;
+use Validator;
+
 class UserController extends Controller
 {
-    public function inscription(Request $request){
-        $utilisateurDonnee = $request -> validate([
-                "name" => ["required", "string", "min:2", "max:255"],
-                "email" => ["required", "email", "unique:users,email"],
-                "password" => ["required","string", "min:8", "max:30", "confirmed"]
-
-            ]);
-            $utilisateurs = User::create([
-                "name" => $utilisateurDonnee["name"],
-                "email" => $utilisateurDonnee["email"],
-                "password" => bcrypt($utilisateurDonnee["password"])
-            ]);
-            return response($utilisateurs,201);
-
-    }
-    public function connexion(Request $request) {
-        $utilisateurDonnee = $request -> validate([
-            "email" => ["required", "email"],
-            "password" => ["required","string", "min:8", "max:30"]
-
+    public function register(Request $request)
+    { 
+        $validator = Validator::make($request->all(),[
+            'name'=>'required',
+            'email'=>'required|email',
+            'password'=>'required',
+            'c_password'=>'required|same:password'
         ]);
-        $utilisateur = User::where("email",$utilisateurDonnee["email"])->first();
-        if(!$utilisateur) return response(["message" => "Aucun utilisateur de trouver avec l'email suivante $utilisateurDonnee[email]"],401); 
-        if(!Hash::check($utilisateurDonnee["password"], $utilisateur->password))
+
+        if($validator->fails())
         {
-        return response(["message" => "Aucun utilisateur de trouver avec ce mot de passe "],401);
-          } 
-         $token = $utilisateur->createToken("CLE_SECRETE")->plainTextToken;
-        return response([
-            "utilisateur" => $utilisateur,
-            "token" => $token
-        ], 200);
+            return response()->json(['error'=>$validator->errors()],202);
+        }
+        $input = $request->all();
+        $input['password'] = bcrypt($input['password']);
+
+        $user = User::create($input);
+
+        $responseArray = [];
+        $responseArray['token'] = $user->createToken('MyApp')->accessToken;
+        $responseArray['name'] = $user->name;
         
+        return response()->json($responseArray,200);  
     }
-     
-}   
+    public function login(Request $request)
+    { 
+        if(Auth::attempt(['email'=>$request->email,'password'=>$request->password]))
+        {
+            $user = Auth::user();
+            $responseArray = [];
+            $responseArray['token'] = $user->createToken('MyApp')->accessToken;
+            $responseArray['name'] = $user->name;
+            return response()->json($responseArray,200);
+        }
+        else
+        {
+            return response()->json(['error'=>'Unauthenticated'],203);
+        }
+    }
+    
+    public function getTaskList(){
+        $data =  Task::all();
+        $responseArray = [
+            'status'=>'ok',
+            'res'=>$data
+        ]; 
+        return response()->json(['results'=>$responseArray],200);
+    }
+    public function logout(Request $request)
+     {
+        if ($request->user()) { 
+            $request->user()->tokens()->delete();
+        }
+        return response()->json(['message' => 'You are Logout'], 200);
+     }
+    
+    
+}
